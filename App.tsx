@@ -9,7 +9,7 @@ import { DataEntry } from './DataEntry';
 
 function App() {
   const [data, setData] = useState<SalesRecord[]>(INITIAL_DATA);
-  const [location, setLocation] = useState('台北市信義區');
+  const [location, setLocation] = useState('Central London');
   const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]); 
   const [totalDailyCovers, setTotalDailyCovers] = useState(118); 
   const [aiMultiplier, setAiMultiplier] = useState(1.0);
@@ -36,18 +36,17 @@ function App() {
           </div>
           <div className="hidden md:flex items-center gap-6">
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">目前店址</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Store Location</span>
               <span className="text-sm font-bold text-slate-700">{location}</span>
             </div>
             <button className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200">
-              產生營運週報
+              Generate Weekly Report
             </button>
           </div>
         </div>
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 py-10">
-        {/* Header Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
           <div className="lg:col-span-9">
             <StaffPredictor 
@@ -59,28 +58,27 @@ function App() {
           </div>
           <div className="lg:col-span-3 space-y-6">
             <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">預測設定</h3>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Forecast Config</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-[9px] font-bold text-slate-400 uppercase mb-1.5 block">預測日期</label>
+                  <label className="text-[9px] font-bold text-slate-400 uppercase mb-1.5 block">Target Date</label>
                   <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none" />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold text-slate-400 uppercase mb-1.5 block">店鋪區域</label>
-                  <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="如：台北市信義區" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" />
+                  <label className="text-[9px] font-bold text-slate-400 uppercase mb-1.5 block">Region / Area</label>
+                  <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. London Soho" className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" />
                 </div>
               </div>
             </div>
             <div className="bg-indigo-600 p-6 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group">
                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
-               <h4 className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-70">AI 信心指數</h4>
+               <h4 className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-70">AI Confidence Index</h4>
                <p className="text-4xl font-black">{(aiMultiplier * 100).toFixed(0)}<span className="text-xl font-medium">%</span></p>
-               <p className="text-[10px] font-medium mt-3 opacity-60 leading-relaxed">基於環境感知、交通壓力與人流相關性分析所得之加權數值。</p>
+               <p className="text-[10px] font-medium mt-3 opacity-60 leading-relaxed">Weighted value derived from environmental awareness, transport pressure, and footfall trends.</p>
             </div>
           </div>
         </div>
 
-        {/* AI Advisor - Full Width Section */}
         <AIAdvisor 
           history={data} 
           location={location} 
@@ -89,10 +87,9 @@ function App() {
           onAIResult={(res) => setAiMultiplier(res.footfallIndex)} 
         />
 
-        {/* Operational Deep Dive */}
         <div className="mt-20">
           <div className="flex items-center gap-4 mb-10">
-            <h3 className="text-3xl font-black tracking-tighter text-slate-900">核心 <span className="text-slate-400">營運數據分析</span></h3>
+            <h3 className="text-3xl font-black tracking-tighter text-slate-900">Core <span className="text-slate-400">Operational Insights</span></h3>
             <div className="h-px flex-grow bg-slate-200"></div>
           </div>
           
@@ -105,18 +102,18 @@ function App() {
             </div>
             <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm flex flex-col">
                <div className="px-8 py-6 bg-slate-50/50 border-b flex justify-between items-center">
-                 <h4 className="font-black text-sm uppercase tracking-widest text-slate-700">歷史日誌 (Historical Logs)</h4>
+                 <h4 className="font-black text-sm uppercase tracking-widest text-slate-700">Historical Shifts</h4>
                  <span className="text-[10px] font-bold px-3 py-1 bg-white border border-slate-200 rounded-full text-slate-400">{data.length} Shifts Recorded</span>
                </div>
                <div className="flex-grow overflow-x-auto">
                  <table className="w-full text-left">
                    <thead>
                      <tr className="text-[10px] uppercase text-slate-400 border-b bg-slate-50/30">
-                       <th className="px-8 py-5">服務日期</th>
-                       <th className="px-8 py-5">餐期</th>
-                       <th className="px-8 py-5">外場配置</th>
-                       <th className="px-8 py-5">來客數 (Cov)</th>
-                       <th className="px-8 py-5">總營收</th>
+                       <th className="px-8 py-5">Service Date</th>
+                       <th className="px-8 py-5">Shift</th>
+                       <th className="px-8 py-5">FOH Staff</th>
+                       <th className="px-8 py-5">Covers</th>
+                       <th className="px-8 py-5">Total Revenue</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-slate-50">
@@ -144,11 +141,6 @@ function App() {
               <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Powered by AuraOps Tactical AI</span>
-          </div>
-          <div className="flex items-center gap-8">
-            <a href="#" className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors">Documentation</a>
-            <a href="#" className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors">Support</a>
-            <a href="#" className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors">Privacy</a>
           </div>
         </div>
       </footer>
