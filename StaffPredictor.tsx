@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { SalesRecord, DailyPrediction, ShiftPrediction } from '../types';
+import { SalesRecord, DailyPrediction, ShiftPrediction } from './types';
 
 interface PredictorProps {
   data: SalesRecord[];
@@ -12,12 +11,12 @@ interface PredictorProps {
 export const StaffPredictor: React.FC<PredictorProps> = ({ data, targetDate, onTotalCoversChange, aiMultiplier }) => {
   const [lunchBookings, setLunchBookings] = useState<number | ''>(12);
   const [dinnerBookings, setDinnerBookings] = useState<number | ''>(55);
-  const [hourlyWage, setHourlyWage] = useState<number>(15); // Default hourly wage
+  const [hourlyWage, setHourlyWage] = useState<number>(15);
 
   const dateObj = useMemo(() => new Date(targetDate), [targetDate]);
   const dayOfWeek = isNaN(dateObj.getTime()) ? null : dateObj.getDay(); 
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const currentDayName = dayOfWeek !== null ? dayNames[dayOfWeek] : "Select Date";
+  const currentDayName = dayOfWeek !== null ? dayNames[dayOfWeek] : "No Date Selected";
 
   const metrics = useMemo(() => {
     const calcShiftMetrics = (s: 'Lunch' | 'Dinner') => {
@@ -51,7 +50,6 @@ export const StaffPredictor: React.FC<PredictorProps> = ({ data, targetDate, onT
       const predictedWalkins = Math.round(m.avgWalkins);
       const predictedCovers = bookings + predictedWalkins;
       
-      // Staffing thresholds based on GM best practices
       let suggested = 1;
       const shiftHours = type === 'Lunch' ? 4 : 6;
 
@@ -84,31 +82,40 @@ export const StaffPredictor: React.FC<PredictorProps> = ({ data, targetDate, onT
   }, [lunchBookings, dinnerBookings, metrics]);
 
   const totalSales = dailyPrediction.lunch.predictedSales + dailyPrediction.dinner.predictedSales;
-  const totalCovers = dailyPrediction.lunch.predictedCovers + dailyPrediction.dinner.predictedCovers;
   const totalLaborHours = (dailyPrediction.lunch.suggestedStaff * 4) + (dailyPrediction.dinner.suggestedStaff * 6);
   const totalLaborCost = totalLaborHours * hourlyWage;
+  const laborRatio = (totalLaborCost / (totalSales || 1)) * 100;
 
   useEffect(() => {
-    onTotalCoversChange(Math.round(totalCovers));
-  }, [totalCovers, onTotalCoversChange]);
+    onTotalCoversChange(Math.round(dailyPrediction.lunch.predictedCovers + dailyPrediction.dinner.predictedCovers));
+  }, [dailyPrediction, onTotalCoversChange]);
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100 flex flex-wrap items-center justify-between gap-6">
-        <div>
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Forecast Target</h3>
-          <p className="text-2xl font-black text-slate-900">{targetDate} <span className="text-indigo-600">({currentDayName})</span></p>
+      <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100 flex flex-wrap items-center justify-between gap-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -mr-16 -mt-16"></div>
+        <div className="relative z-10">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+            Forecast Target
+          </h3>
+          <p className="text-3xl font-black text-slate-900 tracking-tighter">
+            {targetDate} <span className="text-indigo-600 ml-2">{currentDayName}</span>
+          </p>
         </div>
         
-        <div className="flex gap-10">
+        <div className="flex gap-12 relative z-10">
           <div className="text-right">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Est. Revenue</span>
-            <span className="text-3xl font-black text-emerald-600">£{Math.round(totalSales).toLocaleString()}</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Est. Daily Sales</span>
+            <span className="text-4xl font-black text-emerald-600 tracking-tighter">£{Math.round(totalSales).toLocaleString()}</span>
           </div>
-          <div className="text-right border-l border-slate-100 pl-10">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Labor Cost Est.</span>
-            <span className="text-3xl font-black text-rose-500">£{Math.round(totalLaborCost)}</span>
-            <span className="text-[9px] font-bold text-slate-400 block">({((totalLaborCost/totalSales)*100).toFixed(1)}% Ratio)</span>
+          <div className="text-right border-l border-slate-100 pl-12">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Labor Cost Est.</span>
+            <span className="text-4xl font-black text-rose-500 tracking-tighter">£{Math.round(totalLaborCost)}</span>
+            <div className={`mt-2 flex items-center justify-end gap-1.5 font-bold ${laborRatio > 18 ? 'text-rose-600' : 'text-slate-400'}`}>
+               <span className="text-[10px] uppercase">Labor Ratio:</span>
+               <span className="text-xs">{laborRatio.toFixed(1)}%</span>
+            </div>
           </div>
         </div>
       </div>
@@ -118,43 +125,48 @@ export const StaffPredictor: React.FC<PredictorProps> = ({ data, targetDate, onT
           const isLunch = shift === 'Lunch';
           const pred = isLunch ? dailyPrediction.lunch : dailyPrediction.dinner;
           return (
-            <div key={shift} className="bg-slate-900 rounded-[2.5rem] p-8 text-white border border-white/5 shadow-2xl">
-              <div className="flex justify-between items-start mb-8">
+            <div key={shift} className="bg-slate-900 rounded-[3rem] p-10 text-white border border-white/5 shadow-2xl relative group">
+              <div className="flex justify-between items-start mb-10">
                 <div>
-                  <h4 className="text-xl font-black tracking-tight">{shift} Service</h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Peak: {pred.peakTime}</p>
+                  <h4 className="text-2xl font-black tracking-tight mb-1">{shift} Service</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Peak Time: {pred.peakTime}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                  pred.status === 'Optimal' ? 'bg-emerald-500/20 text-emerald-400' : 
-                  pred.status === 'Surplus' ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'
+                <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border shadow-sm ${
+                  pred.status === 'Optimal' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 
+                  pred.status === 'Surplus' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
                 }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                    pred.status === 'Optimal' ? 'bg-emerald-400' : 
+                    pred.status === 'Surplus' ? 'bg-amber-400' : 'bg-rose-400'
+                  }`}></span>
                   {pred.status}
-                </span>
+                </div>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Bookings Input</label>
+              <div className="space-y-8">
+                <div className="relative">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Existing Bookings</label>
                   <input 
                     type="number" 
                     value={isLunch ? lunchBookings : dinnerBookings}
                     onChange={(e) => isLunch ? setLunchBookings(e.target.value === '' ? '' : Number(e.target.value)) : setDinnerBookings(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-2xl font-black text-indigo-400 outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-6 text-3xl font-black text-indigo-400 outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all placeholder:text-slate-800"
+                    placeholder="0"
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <p className="text-[8px] font-bold text-slate-500 uppercase mb-1">AI Walkins</p>
-                    <p className="text-lg font-black">{pred.predictedWalkins}</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-2">AI Walk-ins</p>
+                    <p className="text-xl font-black">{pred.predictedWalkins}</p>
                   </div>
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <p className="text-[8px] font-bold text-slate-500 uppercase mb-1">Staff Needed</p>
-                    <p className="text-lg font-black text-indigo-400">{pred.suggestedStaff}</p>
+                  <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-2">Suggested Staff</p>
+                    <p className="text-xl font-black text-indigo-400">{pred.suggestedStaff} <span className="text-[10px] text-slate-500">PAX</span></p>
                   </div>
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                    <p className="text-[8px] font-bold text-slate-500 uppercase mb-1">SPLH</p>
-                    <p className="text-lg font-black text-emerald-400">£{Math.round(pred.estSPLH)}</p>
+                  <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase mb-2">Exp. SPLH</p>
+                    <p className="text-xl font-black text-emerald-400">£{Math.round(pred.estSPLH)}</p>
                   </div>
                 </div>
               </div>
