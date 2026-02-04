@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { SalesRecord } from "../types";
 
@@ -6,13 +5,15 @@ import { SalesRecord } from "../types";
  * Service to consult AI for strategic staffing advice based on location, bookings, and external grounding.
  */
 export const getAIStaffingAdvice = async (history: SalesRecord[], location: string, targetDate: string, bookings: number) => {
+  // 使用 Vite define 注入的環境變數
   const apiKey = process.env.API_KEY;
   
   if (!apiKey) {
-    throw new Error("API Key is missing. Please set API_KEY in Vercel environment variables.");
+    throw new Error("API Key is missing. Please ensure API_KEY is set in environment variables.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  // 必須使用具名參數 { apiKey } 初始化
+  const ai = new GoogleGenAI({ apiKey: apiKey });
   
   const dateObj = new Date(targetDate);
   const dayName = new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(dateObj);
@@ -23,7 +24,7 @@ export const getAIStaffingAdvice = async (history: SalesRecord[], location: stri
     Service Date: ${targetDate} (${dayName})
     Bookings: ${bookings} guests.
 
-    Analyze real-time events, weather, and transport to provide a staffing prediction index.
+    Analyze real-time events, weather, and transport to provide a staffing prediction index for this restaurant location.
 
     CRITICAL INSTRUCTION:
     At the very end of your response, you MUST include a footfall multiplier tag in this exact format: [FOOTFALL_INDEX: X.X]
@@ -33,7 +34,7 @@ export const getAIStaffingAdvice = async (history: SalesRecord[], location: stri
 
     Analysis Sections:
     [WEATHER] Forecast and outdoor impact.
-    [TRANSPORT] TfL/Local status and disruptions.
+    [TRANSPORT] Local status and disruptions.
     [EVENTS] Major nearby events with exact times.
     [ADVICE] Specific FOH staffing recommendation.
 
@@ -43,14 +44,15 @@ export const getAIStaffingAdvice = async (history: SalesRecord[], location: stri
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: prompt,
+      contents: [{ parts: [{ text: prompt }] }],
       config: {
         tools: [{ googleSearch: {} }],
       }
     });
 
-    const text = response.text || "";
-    if (!text) throw new Error("No strategic signal received.");
+    // 嚴格遵守 SDK 規範：.text 是屬性，不是方法
+    const text = response.text;
+    if (!text) throw new Error("No strategic signal received from the engine.");
 
     const indexMatch = text.match(/\[FOOTFALL_INDEX:\s*(\d+\.?\d*)\]/);
     const footfallIndex = indexMatch ? parseFloat(indexMatch[1]) : 1.0;
