@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SalesRecord } from './types';
 import { INITIAL_DATA } from './constants';
 import { StatsOverview } from './StatsOverview';
-import { Charts } from './Charts';
+import Charts from "./components/Charts";
 import { StaffPredictor } from './StaffPredictor';
 import { AIAdvisor } from './AIAdvisor';
 import { DataEntry } from './DataEntry';
