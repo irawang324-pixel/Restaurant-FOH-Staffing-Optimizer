@@ -5,15 +5,14 @@ import { SalesRecord } from "../types";
  * Service to consult AI for strategic staffing advice based on location, bookings, and external grounding.
  */
 export const getAIStaffingAdvice = async (history: SalesRecord[], location: string, targetDate: string, bookings: number) => {
-  // 使用 Vite define 注入的環境變數
   const apiKey = process.env.API_KEY;
   
   if (!apiKey) {
-    throw new Error("API Key is missing. Please ensure API_KEY is set in environment variables.");
+    throw new Error("API Key is missing.");
   }
 
   // 必須使用具名參數 { apiKey } 初始化
-  const ai = new GoogleGenAI({ apiKey: apiKey });
+  const ai = new GoogleGenAI({ apiKey });
   
   const dateObj = new Date(targetDate);
   const dayName = new Intl.DateTimeFormat('en-GB', { weekday: 'long' }).format(dateObj);
@@ -29,30 +28,30 @@ export const getAIStaffingAdvice = async (history: SalesRecord[], location: stri
     CRITICAL INSTRUCTION:
     At the very end of your response, you MUST include a footfall multiplier tag in this exact format: [FOOTFALL_INDEX: X.X]
     - 1.0 = Normal (Average traffic)
-    - 0.5 - 0.9 = Quieter than usual (Rain, strikes, no events)
+    - 0.5 - 0.9 = Quieter than usual (Rain, strikes)
     - 1.1 - 1.5 = Busier than usual (Sunny, festivals, concerts)
 
     Analysis Sections:
     [WEATHER] Forecast and outdoor impact.
     [TRANSPORT] Local status and disruptions.
-    [EVENTS] Major nearby events with exact times.
+    [EVENTS] Major nearby events.
     [ADVICE] Specific FOH staffing recommendation.
 
-    Style: Professional, sharp, bullet points (•) only. NO bold markers (**).
+    Style: Professional, sharp, bullet points (•) only.
   `;
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
       }
     });
 
-    // 嚴格遵守 SDK 規範：.text 是屬性，不是方法
+    // 嚴格遵守 SDK 規範：.text 是屬性
     const text = response.text;
-    if (!text) throw new Error("No strategic signal received from the engine.");
+    if (!text) throw new Error("No strategic signal received.");
 
     const indexMatch = text.match(/\[FOOTFALL_INDEX:\s*(\d+\.?\d*)\]/);
     const footfallIndex = indexMatch ? parseFloat(indexMatch[1]) : 1.0;
