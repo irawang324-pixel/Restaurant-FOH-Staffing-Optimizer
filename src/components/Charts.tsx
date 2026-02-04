@@ -1,10 +1,11 @@
+
 import React, { useMemo } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend, Cell 
 } from 'recharts';
-import { SalesRecord } from './types';
-import { COLORS } from './constants';
+import { SalesRecord } from '../types';
+import { COLORS } from '../constants';
 
 interface ChartsProps {
   data: SalesRecord[]; 
